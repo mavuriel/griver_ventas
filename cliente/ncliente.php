@@ -26,7 +26,6 @@
     <br>
     <input type="submit" value="enviar">
 </form>
-
 <a href="cliente.php">regresar</a>
 
 <?php include("../layout/fin.php") ?>
