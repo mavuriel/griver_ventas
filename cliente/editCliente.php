@@ -17,8 +17,38 @@ $num = (isset($_REQUEST['telefono'])) ? $_REQUEST['telefono'] : "";
 $email = (isset($_REQUEST['email'])) ? $_REQUEST['email'] : "";
 $btn = (isset($_REQUEST['boton'])) ? $_REQUEST['boton'] : "";
 
-switch ($btn) {
-    case "editar":
+$errores = array();
+$regexNombre = "/^([A-Z]([a-z])*(\s)*)*$/";
+
+if ($btn == "editar") {
+    if (!empty($_REQUEST)) {
+        if (empty($name)) {
+            array_push($errores, "El campo nombre es requerido.");
+        } elseif (!preg_match($regexNombre, $name)) {
+            array_push($errores, "El formato del campo nombre es incorrecto.");
+        }
+
+        if (empty($dir)) {
+            array_push($errores, "El campo dirección es requerido.");
+        }
+
+        if (empty($num)) {
+            array_push($errores, "El campo teléfono es requerido.");
+        } elseif (!is_numeric($num)) {
+            array_push($errores, "Debe ingresar numeros en el campo teléfono.");
+        } elseif (mb_strlen($num) < 10) {
+            array_push($errores, "El teléfono deben ser de 10 digitos.");
+        } elseif (mb_strlen($num) > 10) {
+            array_push($errores, "El teléfono debe ser de 10 digitos maximo.");
+        }
+
+        if (empty($email)) {
+            array_push($errores, "El campo correo es requerido.");
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            array_push($errores, "El formato del correo electronico es incorrecto.");
+        }
+    }
+    if (count($errores) == 0) {
         $sql = $conexion
             ->prepare("UPDATE cliente SET nombre=:nombre ,direccion=:dir,telefono=:tel,correo=:email WHERE id=:id");
         $sql->bindParam(':id', $id);
@@ -27,14 +57,14 @@ switch ($btn) {
         $sql->bindParam(':tel', $num);
         $sql->bindParam(':email', $email);
         $sql->execute();
-
         if ($sql) {
             $nombre = $name;
             $dirc = $dir;
             $telf = $num;
             $correo = $email;
+            $d = "Datos actualizados";
         }
-        break;
+    }
 }
 
 ?>
@@ -44,10 +74,25 @@ switch ($btn) {
 <div class="col-md-12 d-flex flex-column align-items-center  justify-content-center">
 
     <div class="card border-light my-5" style="width: 30rem;">
-        <div class="card-header text-center">
+        <div class="card-header text-center text-white bg-dark">
             <h4 class="card-title">Cliente #<?php echo $id; ?></h4>
         </div>
         <div class="card-body">
+            <?php
+            if (isset($d)) {
+                echo '<div class="alert alert-success text-center">';
+                echo "<p>Datos actualizados correctamente</p>";
+                echo '</div>';
+            }
+
+            if (count($errores) >= 1) {
+                echo '<div class="alert alert-danger"> <ul>';
+                foreach ($errores as $e) {
+                    echo "<li>$e</li>";
+                }
+                echo '</ul> </div>';
+            }
+            ?>
             <form method="POST">
                 <div class="form-group text-left mb-2">
                     <label for="nom">Nombre</label>
@@ -76,33 +121,5 @@ switch ($btn) {
         <a class="btn btn-lg btn-info" href="cliente.php">Regresar</a>
     </div>
 </div>
-
-<!-- <p>esta es la pagina de editar cliente numero <?php echo $id; ?></p>
-
-<form method="POST">
-
-    <label>
-        Nombre
-        <input type="text" name="nombre" value="<?php echo $nombre; ?>">
-    </label>
-    <br>
-    <label>
-        Dirección
-        <input type="text" name="direccion" value="<?php echo $dirc; ?>">
-    </label>
-    <br>
-    <label>
-        Telefono
-        <input type="number" name="telefono" value="<?php echo $telf; ?>">
-    </label>
-    <br>
-    <label>
-        Correo electronico
-        <input type="email" name="email" value="<?php echo $correo; ?>">
-    </label>
-    <br>
-    <button type="submit" name="boton" value="editar">Enviar</button>
-</form>
-<a href="cliente.php">regresar</a> -->
 
 <?php include("../layout/fin.php") ?>
